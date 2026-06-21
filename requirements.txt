@@ -1,5 +1,7 @@
+
 discord.py[voice]
 wavelink
 spotipy
 python-dotenv
 audioop-lts
+aiosqlite
