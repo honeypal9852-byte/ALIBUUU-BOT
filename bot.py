@@ -231,10 +231,10 @@ async def on_ready():
     await setup_db()
     print(f'{bot.user} GOD MODE ON 🔥')
     try:
-        node = wavelink.Node(uri='https://lavalink4.theelf.tech:2333', password='iloveelf')
-        await wavelink.NodePool.connect(client=bot, nodes=[node])
-    except:
-        print("Lavalink connect fail, backup try karo")
+        node = wavelink.Node(uri='http://lavalink.eu:2333', password='youshallnotpass')
+        await wavelink.NodePool.connect(client=bot, nodes=)
+    except Exception as e:
+        print(f"Lavalink Error: {e}")
     await bot.tree.sync()
 
 @bot.event
