@@ -1,7 +1,8 @@
-
-discord.py[voice]
-wavelink
+discord.py[voice]>=2.3.0
+wavelink>=3.0.0
 spotipy
 python-dotenv
 audioop-lts
 aiosqlite
+psutil
+PyNaCl
