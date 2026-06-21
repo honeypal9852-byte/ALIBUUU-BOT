@@ -2,8 +2,6 @@ import discord
 from discord.ext import commands
 import wavelink
 import asyncio
-import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
 import aiosqlite
 import time
 import platform
@@ -14,8 +12,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
-SPOTIFY_ID = os.getenv("SPOTIFY_ID")
-SPOTIFY_SECRET = os.getenv("SPOTIFY_SECRET")
 
 # ===== DYNAMIC PREFIX =====
 async def get_prefix(bot, message):
@@ -32,8 +28,6 @@ intents.message_content = True
 intents.voice_states = True
 bot = commands.Bot(command_prefix=get_prefix, intents=intents, help_command=None)
 bot.start_time = time.time()
-
-sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTIFY_ID, client_secret=SPOTIFY_SECRET))
 
 class Player(wavelink.Player):
     def __init__(self, *args, **kwargs):
@@ -147,7 +141,7 @@ class HelpSelect(discord.ui.Select):
     def __init__(self):
         options = [
             discord.SelectOption(label="Music", description="Play, skip, search, queue", emoji="🎵"),
-            discord.SelectOption(label="Playlist", description="Save/Load playlists, Spotify", emoji="💾"),
+            discord.SelectOption(label="Playlist", description="Save/Load playlists", emoji="💾"),
             discord.SelectOption(label="Settings", description="Prefix, 24/7, loop", emoji="⚙️"),
             discord.SelectOption(label="Info", description="Ping, stats, bot info", emoji="📊"),
         ]
@@ -168,9 +162,7 @@ class HelpSelect(discord.ui.Select):
                               f"**No-Prefix:** `play`, `skip`, `queue` bina `{prefix}` ke chalega"
         elif self.values[0] == "Playlist":
             embed = discord.Embed(title="💾 Playlist Commands", color=0x9B59B6)
-            embed.description = f"`{prefix}play <spotify link>` - Spotify track bajao\n" \
-                              f"`{prefix}play <spotify playlist>` - Poori Spotify playlist load\n" \
-                              f"`{prefix}play <yt playlist>` - YouTube playlist load\n" \
+            embed.description = f"`{prefix}play <yt playlist>` - YouTube playlist load\n" \
                               f"`{prefix}saveplaylist <name>` - Current queue save karo\n" \
                               f"`{prefix}loadplaylist <name>` - Saved playlist bajao\n" \
                               f"`{prefix}myplaylists` - Teri saved playlists dekho"
@@ -197,7 +189,7 @@ async def update_now_playing(vc: Player):
     if not vc or not vc.message:
         return
     if not vc.is_playing():
-        embed = discord.Embed(title="Kuch Nahi Baj Raha", description="Gaana bajane ke liye `play <gaana/spotify link/playlist>` likho", color=0x2b2d31)
+        embed = discord.Embed(title="Kuch Nahi Baj Raha", description="Gaana bajane ke liye `play <gaana/yt link/playlist>` likho", color=0x2b2d31)
         try:
             return await vc.message.edit(embed=embed, view=None)
         except:
@@ -274,7 +266,7 @@ async def on_message(message):
 @bot.command()
 async def help(ctx):
     prefix = await get_prefix_for_guild(ctx.guild.id)
-    embed = discord.Embed(title="👋 Help Menu", description=f"Dropdown se category select karo\n\n**Current Prefix:** `{prefix}`\n**No-Prefix:** Enabled\n**Features:** Spotify + 24/7 + Search Menu + Saved Playlists", color=0x5865F2)
+    embed = discord.Embed(title="👋 Help Menu", description=f"Dropdown se category select karo\n\n**Current Prefix:** `{prefix}`\n**No-Prefix:** Enabled\n**Features:** 24/7 + Search Menu + Saved Playlists", color=0x5865F2)
     embed.set_thumbnail(url=bot.user.avatar.url)
     await ctx.send(embed=embed, view=HelpView())
 
@@ -297,43 +289,8 @@ async def play(ctx, *, search: str = None):
     vc = await ensure_voice(ctx)
     if not vc: return
 
-    # 1. SPOTIFY TRACK
-    if "open.spotify.com/track" in search:
-        try:
-            track_id = search.split("/")[-1].split("?")[0]
-            track_info = sp.track(track_id)
-            search = f"{track_info['name']} {track_info['artists'][0]['name']}"
-            await ctx.send(f"Spotify se mila: **{track_info['name']}** - YouTube pe search kar raha...")
-        except:
-            return await ctx.send("Spotify link galat hai ya track nahi mila")
-
-    # 2. SPOTIFY PLAYLIST
-    elif "open.spotify.com/playlist" in search:
-        try:
-            playlist_id = search.split("/")[-1].split("?")[0]
-            results = sp.playlist_tracks(playlist_id)
-            pl_name = sp.playlist(playlist_id)['name']
-            await ctx.send(f"Spotify Playlist **{pl_name}** load ho rahi: **{len(results['items'])}** gaane...")
-            count = 0
-            for item in results['items']:
-                if not item['track']: continue
-                track = item['track']
-                query = f"{track['name']} {track['artists'][0]['name']}"
-                tracks = await wavelink.YouTubeTrack.search(query)
-                if tracks:
-                    await vc.queue.put_wait(tracks[0])
-                    count += 1
-            await ctx.send(f"✅ Playlist ke **{count}** gaane queue me add ho gaye")
-            if not vc.is_playing():
-                first_track = await vc.queue.get_wait()
-                await vc.play(first_track)
-                vc.message = await ctx.send("Loading...", view=MusicButtons())
-            return await update_now_playing(vc)
-        except Exception as e:
-            return await ctx.send(f"Spotify playlist error: {e}")
-
-    # 3. YOUTUBE PLAYLIST
-    elif "playlist?list=" in search or "&list=" in search:
+    # 1. YOUTUBE PLAYLIST
+    if "playlist?list=" in search or "&list=" in search:
         try:
             playlist = await wavelink.YouTubePlaylist.search(search)
             if not playlist: return await ctx.send("YouTube playlist nahi mili 😢")
@@ -348,7 +305,7 @@ async def play(ctx, *, search: str = None):
         except:
             return await ctx.send("YouTube playlist load nahi hui")
 
-    # 4. NORMAL SEARCH WITH MENU
+    # 2. NORMAL SEARCH WITH MENU
     tracks = await wavelink.YouTubeTrack.search(search, limit=5)
     if not tracks: return await ctx.send("Gaana nahi mila 😢")
     if len(tracks) == 1:
@@ -499,7 +456,7 @@ async def statistics(ctx):
     embed.add_field(name="CPU", value=f"`{psutil.cpu_percent()}%`", inline=True)
     embed.add_field(name="RAM", value=f"`{psutil.virtual_memory().percent}%`", inline=True)
     embed.add_field(name="discord.py", value=f"`{discord.__version__}`", inline=True)
-    embed.set_footer(text=f"Spotify + 24/7 + No-Prefix Enabled")
+    embed.set_footer(text=f"24/7 + No-Prefix Enabled")
     await ctx.send(embed=embed)
 
 bot.run(TOKEN)
