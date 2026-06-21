@@ -223,7 +223,19 @@ async def on_ready():
     await setup_db()
     print(f'{bot.user} GOD MODE ON 🔥')
     try:
-        nodes = [wavelink.Node(uri='http://103.179.243.44:2333', password='youshallnotpass')]
+        # YAHAN CHANGE KIYA HAI - STABLE LAVALINK V4 + BACKUP
+        nodes = [
+            wavelink.Node(
+                uri='https://lavalink.ajiexz.ru:443',
+                password='https://dsc.gg/ajidevserver',
+                secure=True
+            ),
+            wavelink.Node(
+                uri='https://lava-v4.ajiexz.tech:443',
+                password='https://dsc.gg/ajidevserver',
+                secure=True
+            )
+        ]
         await wavelink.Pool.connect(nodes=nodes, client=bot)
     except Exception as e:
         print(f"Lavalink Error: {e}")
