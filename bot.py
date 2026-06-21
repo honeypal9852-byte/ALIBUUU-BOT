@@ -13,7 +13,6 @@ from dotenv import load_dotenv
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 
-# ===== DYNAMIC PREFIX =====
 async def get_prefix(bot, message):
     if not message.guild:
         return commands.when_mentioned_or("!")(bot, message)
@@ -39,7 +38,6 @@ class Player(wavelink.Player):
 
 NO_PREFIX_CMDS = ['play', 'p', 'skip', 's', 'stop', 'pause', 'resume', 'queue', 'q', 'np', 'loop', 'volume', 'vol', '247', 'ping', 'stats', 'help', 'saveplaylist', 'loadplaylist', 'myplaylists']
 
-# ===== DATABASE SETUP =====
 async def setup_db():
     async with aiosqlite.connect("bot.db") as db:
         await db.execute("CREATE TABLE IF NOT EXISTS guilds (guild_id INTEGER PRIMARY KEY, prefix TEXT)")
@@ -52,7 +50,6 @@ async def get_prefix_for_guild(guild_id):
             result = await cursor.fetchone()
             return result[0] if result else "!"
 
-# ===== UI BUTTONS =====
 class MusicButtons(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -100,7 +97,6 @@ class MusicButtons(discord.ui.View):
         await interaction.response.send_message(f"Loop **{'ON 🔁' if vc.loop else 'OFF'}**", ephemeral=True)
         await update_now_playing(vc)
 
-# ===== SEARCH MENU =====
 class SearchSelect(discord.ui.Select):
     def __init__(self, ctx, tracks):
         self.ctx = ctx
@@ -136,7 +132,6 @@ class SearchView(discord.ui.View):
         super().__init__(timeout=30)
         self.add_item(SearchSelect(ctx, tracks))
 
-# ===== HELP COMMAND =====
 class HelpSelect(discord.ui.Select):
     def __init__(self):
         options = [
@@ -184,7 +179,6 @@ class HelpView(discord.ui.View):
         super().__init__(timeout=60)
         self.add_item(HelpSelect())
 
-# ===== UPDATE NOW PLAYING =====
 async def update_now_playing(vc: Player):
     if not vc or not vc.message:
         return
@@ -213,7 +207,6 @@ async def update_now_playing(vc: Player):
     except:
         pass
 
-# ===== CORE FUNCTIONS =====
 async def ensure_voice(ctx):
     if not ctx.author.voice:
         await ctx.send("Pehle VC me aa bhai")
@@ -225,13 +218,12 @@ async def ensure_voice(ctx):
         vc: Player = ctx.voice_client
     return vc
 
-# ===== EVENTS =====
 @bot.event
 async def on_ready():
     await setup_db()
     print(f'{bot.user} GOD MODE ON 🔥')
     try:
-        nodes = [wavelink.Node(uri='https://lava-v4.ajieblogs.eu.org:443', password='https://dsc.gg/ajidevserver')]
+        nodes = [wavelink.Node(uri='http://103.179.243.44:2333', password='youshallnotpass')]
         await wavelink.Pool.connect(nodes=nodes, client=bot)
     except Exception as e:
         print(f"Lavalink Error: {e}")
@@ -273,7 +265,6 @@ async def on_message(message):
         return
     await bot.process_commands(message)
 
-# ===== COMMANDS =====
 @bot.command()
 async def help(ctx):
     prefix = await get_prefix_for_guild(ctx.guild.id)
@@ -300,7 +291,6 @@ async def play(ctx, *, search: str = None):
     vc = await ensure_voice(ctx)
     if not vc: return
 
-    # 1. YOUTUBE PLAYLIST
     if "playlist?list=" in search or "&list=" in search:
         try:
             playlist = await wavelink.Playlist.search(search)
@@ -316,7 +306,6 @@ async def play(ctx, *, search: str = None):
         except:
             return await ctx.send("YouTube playlist load nahi hui")
 
-    # 2. NORMAL SEARCH WITH MENU
     tracks = await wavelink.Playable.search(search)
     if not tracks: return await ctx.send("Gaana nahi mila 😢")
     if len(tracks) == 1:
