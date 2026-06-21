@@ -108,7 +108,7 @@ class SearchSelect(discord.ui.Select):
         options = [
             discord.SelectOption(
                 label=f"{track.title[:80]}",
-                description=f"{track.author[:50]} | {int(track.duration//60)}:{int(track.duration%60):02d}",
+                description=f"{track.author[:50]} | {int(track.length//60000)}:{int(track.length%60000//1000):02d}",
                 value=str(i)
             ) for i, track in enumerate(tracks[:5])
         ]
@@ -194,18 +194,20 @@ async def update_now_playing(vc: Player):
             return await vc.message.edit(embed=embed, view=None)
         except:
             return
-    track = vc.track
-    bar_pos = int(20 * vc.position / track.duration) if track.duration else 0
+    track = vc.current
+    position = vc.position
+    length = track.length
+    bar_pos = int(20 * position / length) if length else 0
     bar = "▬" * bar_pos + "🔘" + "▬" * (20 - bar_pos)
     embed = discord.Embed(title="Now Playing", description=f"**[{track.title}]({track.uri})**", color=0x1DB954)
     embed.add_field(name="Artist", value=track.author, inline=True)
-    embed.add_field(name="Duration", value=f"{int(vc.position//60)}:{int(vc.position%60):02d} / {int(track.duration//60)}:{int(track.duration%60):02d}", inline=True)
+    embed.add_field(name="Duration", value=f"{int(position//60000)}:{int(position%60000//1000):02d} / {int(length//60000)}:{int(length%60000//1000):02d}", inline=True)
     embed.add_field(name="Volume", value=f"{vc.volume}%", inline=True)
     embed.add_field(name="Loop", value="On 🔁" if vc.loop else "Off", inline=True)
     embed.add_field(name="Queue", value=f"{len(vc.queue)} songs", inline=True)
     embed.add_field(name="24/7", value="On" if vc.twenty_four_seven else "Off", inline=True)
     embed.add_field(name="", value=bar, inline=False)
-    if track.thumbnail: embed.set_thumbnail(url=track.thumbnail)
+    if track.artwork: embed.set_thumbnail(url=track.artwork)
     try:
         await vc.message.edit(embed=embed, view=MusicButtons())
     except:
@@ -229,19 +231,28 @@ async def on_ready():
     await setup_db()
     print(f'{bot.user} GOD MODE ON 🔥')
     try:
-        await wavelink.NodePool.create_node(bot=bot, host='lavalink4.theelf.tech', port=2333, password='iloveelf')
+        node = wavelink.Node(uri='https://lavalink4.theelf.tech:2333', password='iloveelf')
+        await wavelink.NodePool.connect(client=bot, nodes=[node])
     except:
         print("Lavalink connect fail, backup try karo")
     await bot.tree.sync()
 
 @bot.event
-async def on_wavelink_track_start(player: Player, track: wavelink.Track):
+async def on_wavelink_node_ready(payload: wavelink.NodeReadyEventPayload):
+    print(f"Node {payload.node.identifier} ready!")
+
+@bot.event
+async def on_wavelink_track_start(payload: wavelink.TrackStartEventPayload):
+    player = payload.player
+    if not player: return
     await update_now_playing(player)
 
 @bot.event
-async def on_wavelink_track_end(player: Player, track, reason):
-    if player.loop:
-        return await player.play(track)
+async def on_wavelink_track_end(payload: wavelink.TrackEndEventPayload):
+    player = payload.player
+    if not player: return
+    if player.loop and payload.track:
+        return await player.play(payload.track)
     if not player.queue.is_empty:
         next_track = await player.queue.get_wait()
         await player.play(next_track)
@@ -292,7 +303,7 @@ async def play(ctx, *, search: str = None):
     # 1. YOUTUBE PLAYLIST
     if "playlist?list=" in search or "&list=" in search:
         try:
-            playlist = await wavelink.YouTubePlaylist.search(search)
+            playlist = await wavelink.Playlist.search(search)
             if not playlist: return await ctx.send("YouTube playlist nahi mili 😢")
             for track in playlist.tracks:
                 await vc.queue.put_wait(track)
@@ -306,7 +317,7 @@ async def play(ctx, *, search: str = None):
             return await ctx.send("YouTube playlist load nahi hui")
 
     # 2. NORMAL SEARCH WITH MENU
-    tracks = await wavelink.YouTubeTrack.search(search, limit=5)
+    tracks = await wavelink.Playable.search(search)
     if not tracks: return await ctx.send("Gaana nahi mila 😢")
     if len(tracks) == 1:
         track = tracks[0]
@@ -318,7 +329,7 @@ async def play(ctx, *, search: str = None):
             vc.message = await ctx.send("Loading...", view=MusicButtons())
         return await update_now_playing(vc)
     embed = discord.Embed(title="🔍 Search Results", description=f"`{search}` ke liye 5 results mile:", color=0x5865F2)
-    await ctx.send(embed=embed, view=SearchView(ctx, tracks))
+    await ctx.send(embed=embed, view=SearchView(ctx, tracks[:5]))
 
 @bot.command(aliases=['247'])
 async def twentyfour_seven(ctx):
@@ -331,9 +342,9 @@ async def twentyfour_seven(ctx):
 @bot.command()
 async def saveplaylist(ctx, *, name: str):
     vc: Player = ctx.voice_client
-    if not vc or not vc.track:
+    if not vc or not vc.current:
         return await ctx.send("Kuch baj nahi raha, kya save karu?")
-    tracks_data = [{"title": vc.track.title, "uri": vc.track.uri}]
+    tracks_data = [{"title": vc.current.title, "uri": vc.current.uri}]
     tracks_data.extend([{"title": t.title, "uri": t.uri} for t in list(vc.queue)])
     async with aiosqlite.connect("bot.db") as db:
         await db.execute("INSERT OR REPLACE INTO playlists (user_id, name, tracks) VALUES (?,?,?)", (ctx.author.id, name.lower(), json.dumps(tracks_data)))
@@ -352,7 +363,7 @@ async def loadplaylist(ctx, *, name: str):
     tracks_data = json.loads(result[0])
     await ctx.send(f"Playlist `{name}` load ho rahi: `{len(tracks_data)}` gaane...")
     for track_info in tracks_data:
-        tracks = await wavelink.YouTubeTrack.search(track_info['uri'])
+        tracks = await wavelink.Playable.search(track_info['uri'])
         if tracks: await vc.queue.put_wait(tracks[0])
     if not vc.is_playing():
         first_track = await vc.queue.get_wait()
@@ -429,7 +440,7 @@ async def ping(ctx):
     embed = discord.Embed(title="🏓 Pong!", color=0x00ff00)
     embed.add_field(name="Bot Latency", value=f"`{latency}ms`", inline=True)
     if ctx.voice_client and ctx.voice_client.node:
-        lavalink_ping = round(ctx.voice_client.node.stats.latency * 1000)
+        lavalink_ping = round(ctx.voice_client.node.heartbeat)
         embed.add_field(name="Lavalink Ping", value=f"`{lavalink_ping}ms`", inline=True)
     else:
         embed.add_field(name="Lavalink Ping", value="`Not Connected`", inline=True)
