@@ -223,12 +223,12 @@ async def on_ready():
     await setup_db()
     print(f'{bot.user} GOD MODE ON 🔥')
     try:
-        # TERA KHUD KA LAVALINK - NO MORE TIMEOUT 🔥
+        # WAVELINK V3 SYNTAX - TERA KHUD KA LAVALINK 🔥
         nodes = [
             wavelink.Node(
-                uri='https://my-lavalink-production-7115.up.railway.app',
-                password='djbot123456',
-                secure=True
+                identifier='Railway-Lavalink',
+                uri='https://my-lavalink-production-7115.up.railway.app:443',
+                password='djbot123456'
             )
         ]
         await wavelink.Pool.connect(nodes=nodes, client=bot)
