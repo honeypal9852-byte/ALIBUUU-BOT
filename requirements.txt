@@ -3,3 +3,4 @@ wavelink==3.4.1
 python-dotenv
 aiosqlite
 psutil
+audioop-lts
