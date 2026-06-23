@@ -223,11 +223,13 @@ async def on_ready():
     await setup_db()
     print(f'{bot.user} GOD MODE ON 🔥')
     try:
-        # FINAL WORKING NODES - JUNE 2026
+        # TERA KHUD KA LAVALINK - NO MORE TIMEOUT 🔥
         nodes = [
-            wavelink.Node(uri='https://v4.lavalink.rocks', password='lavalink_rocks'),
-            wavelink.Node(uri='https://lavalink.oryzen.xyz', password='oryzen.xyz'),
-            wavelink.Node(uri='http://lavalink.clx.moe:2333', password='youshallnotpass')
+            wavelink.Node(
+                uri='https://my-lavalink-production-7115.up.railway.app',
+                password='djbot123456',
+                secure=True
+            )
         ]
         await wavelink.Pool.connect(nodes=nodes, client=bot)
     except Exception as e:
