@@ -43,8 +43,8 @@ async def on_ready():
     await connect_nodes()
 
 @bot.event
-async def on_wavelink_node_ready(node: wavelink.Node):
-    print(f'Node {node.identifier} ready!')
+async def on_wavelink_node_ready(payload: wavelink.NodeReadyEventPayload):
+    print(f'Node {payload.node.identifier} ready!')
 
 @bot.event
 async def on_message(message):
