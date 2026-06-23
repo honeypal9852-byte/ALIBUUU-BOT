@@ -223,20 +223,11 @@ async def on_ready():
     await setup_db()
     print(f'{bot.user} GOD MODE ON 🔥')
     try:
-        # FIXED: Working Lavalink V4 Nodes - June 2026
+        # FINAL WORKING NODES - Wavelink v3.4+ ke liye
         nodes = [
-            wavelink.Node(
-                uri='http://lavalink.lexnet.cc:443',
-                password='lexn3tl@val!nk'
-            ),
-            wavelink.Node(
-                uri='http://lava.inzeworld.com:3128',
-                password='saher.inzeworld.com'
-            ),
-            wavelink.Node(
-                uri='http://lavalink.clx.moe:2333',
-                password='youshallnotpass'
-            )
+            wavelink.Node(uri='https://lava.inzeworld.com', password='saher.inzeworld.com'),
+            wavelink.Node(uri='https://nuclear.lavalink.icu', password='nuclearlavalink'),
+            wavelink.Node(uri='http://lavalink.clx.moe:2333', password='youshallnotpass')
         ]
         await wavelink.Pool.connect(nodes=nodes, client=bot)
     except Exception as e:
