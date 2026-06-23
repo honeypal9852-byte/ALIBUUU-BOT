@@ -223,11 +223,11 @@ async def on_ready():
     await setup_db()
     print(f'{bot.user} GOD MODE ON 🔥')
     try:
-        # WAVELINK V3 SYNTAX - TERA KHUD KA LAVALINK 🔥
+        # WAVELINK V3 + TERA KHUD KA LAVALINK - FINAL FIX 🔥
         nodes = [
             wavelink.Node(
                 identifier='Railway-Lavalink',
-                uri='https://my-lavalink-production-7115.up.railway.app:443',
+                uri='wss://my-lavalink-production-7115.up.railway.app',
                 password='djbot123456'
             )
         ]
