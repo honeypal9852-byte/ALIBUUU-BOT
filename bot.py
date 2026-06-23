@@ -223,7 +223,7 @@ async def on_ready():
     await setup_db()
     print(f'{bot.user} GOD MODE ON 🔥')
     try:
-        # WAVELINK V3 + TERA KHUD KA LAVALINK - FINAL FIX 🔥
+        # FINAL FIX - WSS USE KARNA HAI, HTTPS NAHI 🔥
         nodes = [
             wavelink.Node(
                 identifier='Railway-Lavalink',
