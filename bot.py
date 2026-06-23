@@ -223,15 +223,19 @@ async def on_ready():
     await setup_db()
     print(f'{bot.user} GOD MODE ON 🔥')
     try:
-        # FIXED: secure parameter hata diya, wavelink v3 ke liye sahi
+        # FIXED: Working Lavalink V4 Nodes - June 2026
         nodes = [
             wavelink.Node(
-                uri='https://lavalink.ajiexz.ru:443',
-                password='https://dsc.gg/ajidevserver'
+                uri='http://lavalink.lexnet.cc:443',
+                password='lexn3tl@val!nk'
             ),
             wavelink.Node(
-                uri='https://lava-v4.ajiexz.tech:443',
-                password='https://dsc.gg/ajidevserver'
+                uri='http://lava.inzeworld.com:3128',
+                password='saher.inzeworld.com'
+            ),
+            wavelink.Node(
+                uri='http://lavalink.clx.moe:2333',
+                password='youshallnotpass'
             )
         ]
         await wavelink.Pool.connect(nodes=nodes, client=bot)
