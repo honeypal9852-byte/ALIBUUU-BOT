@@ -60,7 +60,7 @@ async def connect_nodes():
         uri='wss://my-lavalink-production-7115.up.railway.app:443',
         password='djbot123456'
     )
-    await wavelink.Pool.connect(client=bot, nodes=)
+    await wavelink.Pool.connect(client=bot, nodes=[node]) 
 
 @bot.event
 async def on_ready():
