@@ -223,11 +223,11 @@ async def on_ready():
     await setup_db()
     print(f'{bot.user} GOD MODE ON 🔥')
     try:
-        # FINAL FIX - WSS USE KARNA HAI, HTTPS NAHI 🔥
+        # FINAL FINAL FIX - WSS + :443 DONO 🔥
         nodes = [
             wavelink.Node(
                 identifier='Railway-Lavalink',
-                uri='wss://my-lavalink-production-7115.up.railway.app',
+                uri='wss://my-lavalink-production-7115.up.railway.app:443',
                 password='djbot123456'
             )
         ]
