@@ -1,6 +1,4 @@
-discord.py
+
+discord.py==2.3.2
 wavelink==3.4.1
-aiosqlite
-psutil
-python-dotenv
-PyNaCl
+python-dotenv==1.0.1
